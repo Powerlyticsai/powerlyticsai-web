@@ -258,35 +258,42 @@
     border: none;
   }
 
-  /* Fullscreen toggle button, top-right of each iframe */
-  .fs-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 5;
-    width: 36px;
-    height: 36px;
+  /* Fullscreen toggle button in the header (visible only on app tabs) */
+  .header-actions {
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: rgba(10, 14, 20, 0.78);
-    border: 1px solid var(--border-light);
+    gap: 16px;
+  }
+  .fs-btn {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
     border-radius: 4px;
-    color: var(--text);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     cursor: pointer;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-    opacity: 0.55;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+  }
+  body.fs-tab .fs-btn {
+    display: inline-flex;
   }
   .fs-btn:hover {
-    opacity: 1;
-    border-color: var(--accent);
-    color: var(--accent);
+    background: var(--accent);
+    color: #0a0e14;
+  }
+  .fs-btn:active {
+    transform: scale(0.97);
   }
   .fs-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     stroke: currentColor;
     stroke-width: 2;
     fill: none;
@@ -778,9 +785,20 @@
       </div>
       <div class="brand-name">Powerlytics<span class="dot">.</span><span class="suffix">ai</span></div>
     </div>
-    <div class="status">
-      <span class="status-dot"></span>
-      <span>Systems Online</span>
+    <div class="header-actions">
+      <button class="fs-btn" type="button" id="headerFsBtn" aria-label="Toggle fullscreen">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <polyline points="4 9 4 4 9 4"></polyline>
+          <polyline points="20 9 20 4 15 4"></polyline>
+          <polyline points="4 15 4 20 9 20"></polyline>
+          <polyline points="20 15 20 20 15 20"></polyline>
+        </svg>
+        <span>Fullscreen</span>
+      </button>
+      <div class="status">
+        <span class="status-dot"></span>
+        <span>Systems Online</span>
+      </div>
     </div>
   </header>
 
@@ -803,15 +821,7 @@
     <!-- DISTRIBUTION-DX PANEL -->
     <section class="panel active" id="dx">
       <div class="embed-frame">
-        <button class="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <polyline points="4 9 4 4 9 4"></polyline>
-            <polyline points="20 9 20 4 15 4"></polyline>
-            <polyline points="4 15 4 20 9 20"></polyline>
-            <polyline points="20 15 20 20 15 20"></polyline>
-          </svg>
-        </button>
-        <iframe
+<iframe
           src="https://dx.powerlyticsai.com"
           title="Powerlytics-Dx Application"
           allow="clipboard-read; clipboard-write; fullscreen"
@@ -823,15 +833,7 @@
     <!-- TRANSMISSION-TX PANEL -->
     <section class="panel" id="tx">
       <div class="embed-frame">
-        <button class="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <polyline points="4 9 4 4 9 4"></polyline>
-            <polyline points="20 9 20 4 15 4"></polyline>
-            <polyline points="4 15 4 20 9 20"></polyline>
-            <polyline points="20 15 20 20 15 20"></polyline>
-          </svg>
-        </button>
-        <iframe
+<iframe
           src="https://tx.powerlyticsai.com"
           title="Powerlytics-Tx Application"
           allow="clipboard-read; clipboard-write; fullscreen"
@@ -961,10 +963,12 @@
   });
   applyTabMode(document.querySelector('.tab.active')?.dataset.panel);
 
-  // ─── FULLSCREEN BUTTONS ────────────────
-  document.querySelectorAll('.fs-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const frame = btn.closest('.embed-frame');
+  // ─── FULLSCREEN BUTTON (HEADER) ────────
+  const headerFsBtn = document.getElementById('headerFsBtn');
+  if (headerFsBtn) {
+    headerFsBtn.addEventListener('click', () => {
+      const activePanel = document.querySelector('.panel.active');
+      const frame = activePanel?.querySelector('.embed-frame');
       if (!frame) return;
       const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
       if (fsEl) {
@@ -973,7 +977,7 @@
         (frame.requestFullscreen || frame.webkitRequestFullscreen).call(frame);
       }
     });
-  });
+  }
 
   // ─── STAR RATING ───────────────────────
   const starsContainer = document.getElementById('stars');
