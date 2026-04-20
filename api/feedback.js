@@ -39,8 +39,11 @@ export default async function handler(req, res) {
 
   const token = process.env.GITHUB_TOKEN;
   const repo = process.env.FEEDBACK_REPO;
-  if (!token || !repo) {
-    return res.status(500).json({ error: "Server misconfigured" });
+  const missing = [];
+  if (!token) missing.push("GITHUB_TOKEN");
+  if (!repo) missing.push("FEEDBACK_REPO");
+  if (missing.length) {
+    return res.status(500).json({ error: "Server misconfigured", missing });
   }
 
   const now = new Date();
