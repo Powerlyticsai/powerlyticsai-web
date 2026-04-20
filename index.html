@@ -239,6 +239,61 @@
     background: white;
   }
 
+  /* App tabs: fill viewport, no outer padding, no scroll */
+  body.fs-tab main {
+    padding: 0;
+    max-width: none;
+  }
+  body.fs-tab .embed-frame {
+    height: calc(100vh - 122px);
+    min-height: 0;
+    border-radius: 0;
+    border: none;
+    border-top: 1px solid var(--border);
+    box-shadow: none;
+  }
+  body.fs-tab .embed-frame:fullscreen,
+  body.fs-tab .embed-frame:-webkit-full-screen {
+    height: 100vh;
+    border: none;
+  }
+
+  /* Fullscreen toggle button, top-right of each iframe */
+  .fs-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 5;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 14, 20, 0.78);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    color: var(--text);
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    opacity: 0.55;
+  }
+  .fs-btn:hover {
+    opacity: 1;
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .fs-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   /* ─── PLACEHOLDER PANELS ─────────────── */
   .placeholder {
     border: 1px solid var(--border);
@@ -748,6 +803,14 @@
     <!-- DISTRIBUTION-DX PANEL -->
     <section class="panel active" id="dx">
       <div class="embed-frame">
+        <button class="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="4 9 4 4 9 4"></polyline>
+            <polyline points="20 9 20 4 15 4"></polyline>
+            <polyline points="4 15 4 20 9 20"></polyline>
+            <polyline points="20 15 20 20 15 20"></polyline>
+          </svg>
+        </button>
         <iframe
           src="https://dx.powerlyticsai.com"
           title="Powerlytics-Dx Application"
@@ -760,6 +823,14 @@
     <!-- TRANSMISSION-TX PANEL -->
     <section class="panel" id="tx">
       <div class="embed-frame">
+        <button class="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="4 9 4 4 9 4"></polyline>
+            <polyline points="20 9 20 4 15 4"></polyline>
+            <polyline points="4 15 4 20 9 20"></polyline>
+            <polyline points="20 15 20 20 15 20"></polyline>
+          </svg>
+        </button>
         <iframe
           src="https://tx.powerlyticsai.com"
           title="Powerlytics-Tx Application"
@@ -873,12 +944,34 @@
   // ─── TAB SWITCHING ─────────────────────
   const tabs = document.querySelectorAll('.tab');
   const panels = document.querySelectorAll('.panel');
+  const APP_PANELS = new Set(['dx', 'tx']);
+
+  function applyTabMode(panelId) {
+    document.body.classList.toggle('fs-tab', APP_PANELS.has(panelId));
+  }
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       panels.forEach(p => p.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById(tab.dataset.panel).classList.add('active');
+      applyTabMode(tab.dataset.panel);
+    });
+  });
+  applyTabMode(document.querySelector('.tab.active')?.dataset.panel);
+
+  // ─── FULLSCREEN BUTTONS ────────────────
+  document.querySelectorAll('.fs-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const frame = btn.closest('.embed-frame');
+      if (!frame) return;
+      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+      if (fsEl) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else {
+        (frame.requestFullscreen || frame.webkitRequestFullscreen).call(frame);
+      }
     });
   });
 
