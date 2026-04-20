@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Powerlytics.ai — Grid Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@300;400;500;600&family=Inter+Tight:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e14;
+    --bg-elev: #11161f;
+    --bg-card: #141b26;
+    --border: #1f2937;
+    --border-light: #2a3644;
+    --text: #e8edf4;
+    --text-dim: #8a96a8;
+    --text-faint: #4a5568;
+    --accent: #ffb400;        /* amber — "power" signal */
+    --accent-soft: #ffb40022;
+    --accent-line: #ffb40055;
+    --cyan: #4dd4e0;
+    --green: #5cd989;
+    --red: #ff6b6b;
+    --display: "Fraunces", Georgia, serif;
+    --body: "Inter Tight", -apple-system, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /* Subtle grid texture on background */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse at center top, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center top, black 30%, transparent 80%);
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── HEADER ─────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10, 14, 20, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-mark {
+    width: 32px;
+    height: 32px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .brand-mark svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .brand-name {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+  }
+
+  .brand-name .dot {
+    color: var(--accent);
+  }
+
+  .brand-name .suffix {
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ─── TABS ────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elev);
+  }
+
+  .tab {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    padding: 18px 24px;
+    font-family: var(--body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.005em;
+  }
+
+  .tab:hover {
+    color: var(--text);
+  }
+
+  .tab.active {
+    color: var(--text);
+  }
+
+  .tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 16px;
+    right: 16px;
+    height: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent-line);
+  }
+
+  .tab-path {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-left: 4px;
+  }
+
+  .tab.active .tab-path {
+    color: var(--accent);
+  }
+
+  /* ─── MAIN ────────────────────────────── */
+  main {
+    flex: 1;
+    padding: 48px 40px;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .panel {
+    display: none;
+    animation: fadeIn 0.35s ease;
+  }
+
+  .panel.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── EMBED FRAME (IFRAMES) ─────────── */
+  .embed-frame {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-card);
+    overflow: hidden;
+    position: relative;
+    height: calc(100vh - 220px);
+    min-height: 600px;
+    box-shadow: 0 0 0 1px var(--border), 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .embed-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background: white;
+  }
+
+  /* ─── PLACEHOLDER PANELS ─────────────── */
+  .placeholder {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 80px 40px;
+    background: var(--bg-card);
+    position: relative;
+    overflow: hidden;
+    min-height: 540px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .placeholder::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, var(--accent-soft) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(77, 212, 224, 0.05) 0%, transparent 40%);
+    pointer-events: none;
+  }
+
+  .placeholder-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .placeholder h1 {
+    font-family: var(--display);
+    font-size: 56px;
+    line-height: 1.05;
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    max-width: 720px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .placeholder h1 em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 300;
+  }
+
+  .placeholder p {
+    color: var(--text-dim);
+    font-size: 16px;
+    max-width: 520px;
+    margin-bottom: 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .placeholder-meta {
+    display: flex;
+    gap: 32px;
+    margin-top: 40px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    position: relative;
+    z-index: 1;
+  }
+
+  .placeholder-meta span strong {
+    color: var(--text-dim);
+    font-weight: 500;
+    margin-left: 8px;
+  }
+
+  /* Decorative circuit lines */
+  .circuit {
+    position: absolute;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  .circuit-tl { top: 20px; left: 20px; }
+  .circuit-br { bottom: 20px; right: 20px; transform: rotate(180deg); }
+
+  /* ─── FEEDBACK PANEL ─────────────────── */
+  .feedback-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .feedback-intro h2 {
+    font-family: var(--display);
+    font-size: 48px;
+    line-height: 1.05;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+
+  .feedback-intro h2 em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 300;
+  }
+
+  .feedback-intro p {
+    color: var(--text-dim);
+    font-size: 15px;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .info-box {
+    border-left: 2px solid var(--accent);
+    padding: 14px 18px;
+    background: var(--bg-elev);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .info-box span {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .feedback-form {
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    padding: 36px;
+    border-radius: 4px;
+    position: relative;
+  }
+
+  .form-label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 14px;
+  }
+
+  .form-label .req {
+    color: var(--accent);
+    margin-left: 2px;
+  }
+
+  /* ─── STAR RATING ────────────────────── */
+  .stars {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .star {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    color: var(--border-light);
+    transition: color 0.15s, transform 0.15s;
+  }
+
+  .star svg {
+    width: 32px;
+    height: 32px;
+    display: block;
+  }
+
+  .star:hover {
+    transform: scale(1.1);
+  }
+
+  .star.filled {
+    color: var(--accent);
+    filter: drop-shadow(0 0 6px var(--accent-soft));
+  }
+
+  .rating-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-bottom: 28px;
+    height: 16px;
+  }
+
+  .rating-label.has-rating {
+    color: var(--accent);
+  }
+
+  /* ─── TEXTAREA ──────────────────────── */
+  textarea, .text-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 14px;
+    line-height: 1.5;
+    transition: border-color 0.15s;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  textarea:focus, .text-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  textarea::placeholder, .text-input::placeholder {
+    color: var(--text-faint);
+  }
+
+  /* ─── SECTION DIVIDER ──────────────── */
+  .section-divider {
+    margin: 32px 0 24px;
+    position: relative;
+    text-align: center;
+  }
+
+  .section-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-light), transparent);
+  }
+
+  .divider-label {
+    position: relative;
+    background: var(--bg-card);
+    padding: 0 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  /* ─── CONTACT GRID ────────────────── */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 16px;
+  }
+
+  .contact-field .form-label {
+    margin-bottom: 10px;
+  }
+
+  .field-error {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--red);
+    margin-top: 6px;
+    min-height: 14px;
+    letter-spacing: 0.05em;
+  }
+
+  .text-input.invalid {
+    border-color: var(--red);
+  }
+
+  .text-input.invalid:focus {
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+  }
+
+  @media (max-width: 540px) {
+    .contact-grid { grid-template-columns: 1fr; }
+  }
+
+  .char-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-top: 6px;
+    text-align: right;
+  }
+
+  /* ─── SUBMIT BUTTON ─────────────────── */
+  .submit-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px 24px;
+    background: var(--accent);
+    color: #0a0e14;
+    border: none;
+    border-radius: 3px;
+    font-family: var(--body);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-transform: uppercase;
+  }
+
+  .submit-btn:hover:not(:disabled) {
+    background: #ffc633;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(255, 180, 0, 0.3);
+  }
+
+  .submit-btn:disabled {
+    background: var(--border-light);
+    color: var(--text-faint);
+    cursor: not-allowed;
+  }
+
+  /* ─── WHITEPAPER CARD ────────────────── */
+  .whitepaper {
+    margin-top: 28px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    background: var(--bg-elev);
+    opacity: 0.45;
+    pointer-events: none;
+    position: relative;
+    transition: all 0.4s ease;
+  }
+
+  .whitepaper.unlocked {
+    opacity: 1;
+    pointer-events: auto;
+    border-color: var(--accent-line);
+    background: linear-gradient(135deg, var(--bg-elev) 0%, var(--accent-soft) 200%);
+    animation: unlock 0.6s ease;
+  }
+
+  @keyframes unlock {
+    0% { transform: scale(0.98); opacity: 0.45; }
+    50% { transform: scale(1.01); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .whitepaper-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .whitepaper-lock {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .whitepaper.unlocked .whitepaper-lock {
+    color: var(--green);
+  }
+
+  .whitepaper h3 {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    margin-bottom: 6px;
+  }
+
+  .whitepaper p {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-bottom: 18px;
+  }
+
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .download-btn:hover {
+    background: var(--accent);
+    color: #0a0e14;
+  }
+
+  .download-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ─── THANK YOU STATE ─────────────────── */
+  .thank-you {
+    display: none;
+    padding: 20px;
+    background: rgba(92, 217, 137, 0.08);
+    border: 1px solid rgba(92, 217, 137, 0.3);
+    border-radius: 3px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--green);
+    font-family: var(--mono);
+  }
+
+  .thank-you.show {
+    display: block;
+    animation: fadeIn 0.4s ease;
+  }
+
+  /* ─── FOOTER ─────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ─── RESPONSIVE ─────────────────────── */
+  @media (max-width: 900px) {
+    header, main, footer, .tabs { padding-left: 20px; padding-right: 20px; }
+    .tabs { overflow-x: auto; white-space: nowrap; }
+    .feedback-grid { grid-template-columns: 1fr; gap: 32px; }
+    .placeholder h1 { font-size: 36px; }
+    .feedback-intro h2 { font-size: 32px; }
+    .placeholder-meta { flex-direction: column; gap: 12px; }
+    .tab-path { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 32 32" fill="none">
+          <path d="M16 2 L4 18 L14 18 L12 30 L28 12 L18 12 L20 2 Z"
+                stroke="#ffb400" stroke-width="1.5" stroke-linejoin="round" fill="#ffb40015"/>
+        </svg>
+      </div>
+      <div class="brand-name">Powerlytics<span class="dot">.</span><span class="suffix">ai</span></div>
+    </div>
+    <div class="status">
+      <span class="status-dot"></span>
+      <span>Systems Online</span>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-panel="dx" role="tab">
+      Powerlytics-Dx
+    </button>
+    <button class="tab" data-panel="tx" role="tab">
+      Powerlytics-Tx
+    </button>
+    <button class="tab" data-panel="feedback" role="tab">
+      Feedback
+    </button>
+  </nav>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- DISTRIBUTION-DX PANEL -->
+    <section class="panel active" id="dx">
+      <div class="embed-frame">
+        <iframe
+          src="https://distribution-dx-live.vercel.app"
+          title="Powerlytics-Dx Application"
+          allow="clipboard-read; clipboard-write; fullscreen"
+          loading="lazy">
+        </iframe>
+      </div>
+    </section>
+
+    <!-- TRANSMISSION-TX PANEL -->
+    <section class="panel" id="tx">
+      <div class="embed-frame">
+        <iframe
+          src="https://transmission-tx-live.vercel.app"
+          title="Powerlytics-Tx Application"
+          allow="clipboard-read; clipboard-write; fullscreen"
+          loading="lazy">
+        </iframe>
+      </div>
+    </section>
+
+    <!-- FEEDBACK PANEL -->
+    <section class="panel" id="feedback">
+      <div class="feedback-grid">
+
+        <div class="feedback-intro">
+          <h2>Tell us how it <em>felt</em>.</h2>
+          <p>Your experience shapes the next release. Rate the tools, drop a comment, and unlock the full research whitepaper on grid intelligence.</p>
+          <div class="info-box">
+            <span>// UNLOCK CRITERIA</span><br>
+            Rate 1–5 stars → comment → suggest next app → provide contact info → submit.<br>
+            Whitepaper download appears once submitted.
+          </div>
+        </div>
+
+        <form class="feedback-form" id="feedbackForm" novalidate>
+
+          <label class="form-label">How was your experience?<span class="req">*</span></label>
+          <div class="stars" id="stars" role="radiogroup" aria-label="Star rating">
+            <!-- stars generated by JS -->
+          </div>
+          <div class="rating-label" id="ratingLabel">Tap a star to rate</div>
+
+          <label class="form-label" for="comment">Your comments<span class="req">*</span></label>
+          <textarea id="comment" placeholder="What worked, what didn't, what would you change?" maxlength="1000"></textarea>
+          <div class="char-count"><span id="charCount">0</span> / 1000</div>
+
+          <label class="form-label" for="nextApp" style="margin-top: 24px;">Which application would you like to see next?<span class="req">*</span></label>
+          <input type="text" id="nextApp" class="text-input" placeholder="e.g. Load Forecasting, Outage Prediction, Asset Health…" maxlength="200" />
+          <div class="char-count"><span id="nextAppCount">0</span> / 200</div>
+
+          <div class="section-divider">
+            <span class="divider-label">Contact Info · Required for whitepaper</span>
+          </div>
+
+          <div class="contact-grid">
+            <div class="contact-field">
+              <label class="form-label" for="name">Full Name<span class="req">*</span></label>
+              <input type="text" id="name" class="text-input" placeholder="Jane Doe" maxlength="100" autocomplete="name" />
+            </div>
+            <div class="contact-field">
+              <label class="form-label" for="company">Company<span class="req">*</span></label>
+              <input type="text" id="company" class="text-input" placeholder="Acme Utilities" maxlength="120" autocomplete="organization" />
+            </div>
+            <div class="contact-field">
+              <label class="form-label" for="email">Email<span class="req">*</span></label>
+              <input type="email" id="email" class="text-input" placeholder="jane@acme.com" maxlength="150" autocomplete="email" />
+              <div class="field-error" id="emailError"></div>
+            </div>
+            <div class="contact-field">
+              <label class="form-label" for="phone">Phone<span class="req">*</span></label>
+              <input type="tel" id="phone" class="text-input" placeholder="+1 (555) 123-4567" maxlength="30" autocomplete="tel" />
+              <div class="field-error" id="phoneError"></div>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submitBtn" disabled>
+            <span>Submit Feedback</span>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 7H13M13 7L7 1M13 7L7 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+
+          <div class="thank-you" id="thankYou">
+            ✓ Thank you. Your feedback was recorded. The whitepaper is now available for download below.
+          </div>
+
+          <div class="whitepaper" id="whitepaper">
+            <div class="whitepaper-top">
+              <div class="whitepaper-lock" id="lockStatus">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <rect x="1.5" y="4.5" width="7" height="5" stroke="currentColor" stroke-width="1" fill="none"/>
+                  <path d="M3 4.5 V3 a2 2 0 0 1 4 0 V4.5" stroke="currentColor" stroke-width="1" fill="none"/>
+                </svg>
+                Locked · Complete feedback to unlock
+              </div>
+            </div>
+            <h3>Powerlytics Whitepaper</h3>
+            <p>Deep-dive on AI-driven diagnostics for distribution and transmission grids.</p>
+            <a href="#" class="download-btn" id="downloadBtn" download>
+              <svg viewBox="0 0 14 14" fill="none">
+                <path d="M7 1V10M7 10L3 6M7 10L11 6M1 13H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Download Whitepaper (PDF)
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <span>© 2026 Powerlytics.ai</span>
+    <span>Grid Intelligence · Built for Engineers</span>
+  </footer>
+
+</div>
+
+<script>
+  // ─── TAB SWITCHING ─────────────────────
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.panel).classList.add('active');
+    });
+  });
+
+  // ─── STAR RATING ───────────────────────
+  const starsContainer = document.getElementById('stars');
+  const ratingLabel = document.getElementById('ratingLabel');
+  let currentRating = 0;
+
+  const ratingWords = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
+
+  for (let i = 1; i <= 5; i++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'star';
+    btn.dataset.value = i;
+    btn.setAttribute('aria-label', `${i} star${i>1?'s':''}`);
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2 L14.9 8.6 L22 9.4 L16.7 14.2 L18.2 21 L12 17.3 L5.8 21 L7.3 14.2 L2 9.4 L9.1 8.6 Z"
+            stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+    </svg>`;
+    starsContainer.appendChild(btn);
+  }
+
+  const starEls = document.querySelectorAll('.star');
+
+  starEls.forEach(star => {
+    star.addEventListener('click', () => {
+      currentRating = parseInt(star.dataset.value);
+      updateStars(currentRating);
+      ratingLabel.textContent = `${currentRating}/5 · ${ratingWords[currentRating]}`;
+      ratingLabel.classList.add('has-rating');
+      validateForm();
+    });
+    star.addEventListener('mouseenter', () => {
+      const val = parseInt(star.dataset.value);
+      updateStars(val);
+    });
+  });
+
+  starsContainer.addEventListener('mouseleave', () => {
+    updateStars(currentRating);
+  });
+
+  function updateStars(val) {
+    starEls.forEach(s => {
+      if (parseInt(s.dataset.value) <= val) s.classList.add('filled');
+      else s.classList.remove('filled');
+    });
+  }
+
+  // ─── TEXTAREA ──────────────────────────
+  const comment = document.getElementById('comment');
+  const charCount = document.getElementById('charCount');
+  comment.addEventListener('input', () => {
+    charCount.textContent = comment.value.length;
+    validateForm();
+  });
+
+  // ─── NEXT APP INPUT ────────────────────
+  const nextApp = document.getElementById('nextApp');
+  const nextAppCount = document.getElementById('nextAppCount');
+  nextApp.addEventListener('input', () => {
+    nextAppCount.textContent = nextApp.value.length;
+    validateForm();
+  });
+
+  // ─── CONTACT FIELDS ────────────────────
+  const nameEl = document.getElementById('name');
+  const companyEl = document.getElementById('company');
+  const emailEl = document.getElementById('email');
+  const phoneEl = document.getElementById('phone');
+  const emailError = document.getElementById('emailError');
+  const phoneError = document.getElementById('phoneError');
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^[+\d][\d\s\-().]{6,}$/;
+
+  function isValidEmail(v) { return emailRegex.test(v.trim()); }
+  function isValidPhone(v) { return phoneRegex.test(v.trim()); }
+
+  [nameEl, companyEl, emailEl, phoneEl].forEach(el => {
+    el.addEventListener('input', validateForm);
+    el.addEventListener('blur', () => {
+      // Show errors only on blur to avoid nagging while typing
+      if (el === emailEl) {
+        if (emailEl.value.trim() && !isValidEmail(emailEl.value)) {
+          emailEl.classList.add('invalid');
+          emailError.textContent = 'Enter a valid email address';
+        } else {
+          emailEl.classList.remove('invalid');
+          emailError.textContent = '';
+        }
+      }
+      if (el === phoneEl) {
+        if (phoneEl.value.trim() && !isValidPhone(phoneEl.value)) {
+          phoneEl.classList.add('invalid');
+          phoneError.textContent = 'Enter a valid phone number';
+        } else {
+          phoneEl.classList.remove('invalid');
+          phoneError.textContent = '';
+        }
+      }
+    });
+  });
+
+  // ─── FORM VALIDATION ───────────────────
+  const submitBtn = document.getElementById('submitBtn');
+  function validateForm() {
+    const valid =
+      currentRating > 0
+      && comment.value.trim().length > 0
+      && nextApp.value.trim().length > 0
+      && nameEl.value.trim().length > 0
+      && companyEl.value.trim().length > 0
+      && isValidEmail(emailEl.value)
+      && isValidPhone(phoneEl.value);
+    submitBtn.disabled = !valid;
+  }
+
+  // ─── SUBMIT ────────────────────────────
+  const form = document.getElementById('feedbackForm');
+  const whitepaper = document.getElementById('whitepaper');
+  const thankYou = document.getElementById('thankYou');
+  const lockStatus = document.getElementById('lockStatus');
+  let submitted = false;
+
+  // 🔧 REPLACE THIS with your Formspree endpoint (format: https://formspree.io/f/XXXXXXXX)
+  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/YOUR_FORM_ID';
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (submitBtn.disabled || submitted) return;
+
+    const payload = {
+      rating: currentRating,
+      rating_label: ratingWords[currentRating],
+      comment: comment.value.trim(),
+      next_app_request: nextApp.value.trim(),
+      name: nameEl.value.trim(),
+      company: companyEl.value.trim(),
+      email: emailEl.value.trim(),
+      phone: phoneEl.value.trim(),
+      submitted_at: new Date().toISOString(),
+      _subject: `Powerlytics Feedback: ${currentRating}★ from ${nameEl.value.trim()} (${companyEl.value.trim()})`
+    };
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Sending…</span>';
+
+    try {
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('Submission failed');
+
+      submitted = true;
+      whitepaper.classList.add('unlocked');
+      thankYou.classList.add('show');
+      lockStatus.innerHTML = `
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M1.5 5.5 L4 8 L9 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Unlocked · Whitepaper available
+      `;
+      submitBtn.innerHTML = '<span>Feedback Submitted</span>';
+    } catch (err) {
+      console.error('Feedback submission error:', err);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Try Again — Submission Failed</span>';
+      thankYou.style.background = 'rgba(255, 107, 107, 0.08)';
+      thankYou.style.borderColor = 'rgba(255, 107, 107, 0.3)';
+      thankYou.style.color = 'var(--red)';
+      thankYou.textContent = '⚠ Couldn\'t send feedback. Check your connection and try again.';
+      thankYou.classList.add('show');
+    }
+  });
+
+  // ─── DOWNLOAD ──────────────────────────
+  const downloadBtn = document.getElementById('downloadBtn');
+  downloadBtn.addEventListener('click', (e) => {
+    // Replace href with actual whitepaper PDF path once you have it:
+    // downloadBtn.href = '/path/to/powerlytics-whitepaper.pdf';
+    if (downloadBtn.getAttribute('href') === '#') {
+      e.preventDefault();
+      alert('Whitepaper PDF will be wired up once you provide the file. Replace the href on #downloadBtn with your PDF path.');
+    }
+  });
+</script>
+</body>
+</html>
