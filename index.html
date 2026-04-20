@@ -939,7 +939,7 @@
             </div>
             <h3>Powerlytics Whitepaper</h3>
             <p>Deep-dive on AI-driven diagnostics for distribution and transmission grids.</p>
-            <a href="#" class="download-btn" id="downloadBtn" download>
+            <a href="./DER%20Revolution_%20DER%20guide%20for%20Utility%20Engineers.pdf" class="download-btn" id="downloadBtn" download>
               <svg viewBox="0 0 14 14" fill="none">
                 <path d="M7 1V10M7 10L3 6M7 10L11 6M1 13H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
@@ -1175,15 +1175,9 @@
   });
 
   // ─── DOWNLOAD ──────────────────────────
-  const downloadBtn = document.getElementById('downloadBtn');
-  downloadBtn.addEventListener('click', (e) => {
-    // Replace href with actual whitepaper PDF path once you have it:
-    // downloadBtn.href = '/path/to/powerlytics-whitepaper.pdf';
-    if (downloadBtn.getAttribute('href') === '#') {
-      e.preventDefault();
-      alert('Whitepaper PDF will be wired up once you provide the file. Replace the href on #downloadBtn with your PDF path.');
-    }
-  });
+  // The anchor's href + download attribute handle the PDF download natively.
+  // Gating is handled by .whitepaper.unlocked — clicks on the disabled card
+  // don't reach the anchor because it's pointer-events:none until unlocked.
 </script>
 </body>
 </html>
