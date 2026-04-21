@@ -1178,6 +1178,58 @@
   // The anchor's href + download attribute handle the PDF download natively.
   // Gating is handled by .whitepaper.unlocked — clicks on the disabled card
   // don't reach the anchor because it's pointer-events:none until unlocked.
+
+  // ─── ACTIVITY TRACKING ─────────────────
+  // Posts lightweight events to /api/activity on page load, tab change, and
+  // page unload. The serverless function stores each one as a JSON file in
+  // Powerlyticsai/usage-logs. No PII beyond IP + UA is collected.
+  (function () {
+    const SESSION_KEY = 'powerlytics_session_id';
+    let sid = sessionStorage.getItem(SESSION_KEY);
+    if (!sid) {
+      sid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      sessionStorage.setItem(SESSION_KEY, sid);
+    }
+
+    const ENDPOINT = '/api/activity';
+
+    function track(event, app) {
+      const payload = {
+        event: event,
+        app: app || null,
+        session_id: sid,
+        client_ts: new Date().toISOString(),
+      };
+      const body = JSON.stringify(payload);
+      try {
+        if (event === 'session_end' && navigator.sendBeacon) {
+          const blob = new Blob([body], { type: 'application/json' });
+          navigator.sendBeacon(ENDPOINT, blob);
+        } else {
+          fetch(ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body,
+            keepalive: true,
+          }).catch(function () { /* swallow — telemetry never breaks UX */ });
+        }
+      } catch (e) { /* swallow */ }
+    }
+
+    // Session start — record the tab that was active on load.
+    const firstActive = document.querySelector('.tab.active');
+    track('session_start', firstActive ? firstActive.dataset.panel : 'landing');
+
+    // Tab change — attach alongside the existing tab-switch listener.
+    document.querySelectorAll('.tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        track('tab_change', btn.dataset.panel);
+      });
+    });
+
+    // Session end — use pagehide (more reliable than beforeunload on mobile/Safari).
+    window.addEventListener('pagehide', function () { track('session_end'); });
+  })();
 </script>
 </body>
 </html>
