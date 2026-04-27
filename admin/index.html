@@ -187,6 +187,44 @@
   .toast.ok { border-color: var(--green); color: var(--green); }
 
   .empty { color: var(--text-dim); padding: 16px; text-align: center; font-family: var(--mono); font-size: 12px; }
+
+  .bulk-bar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    background: rgba(255,180,0,0.08);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+  }
+  .bulk-bar.show { display: flex; }
+  .bulk-bar button {
+    background: var(--accent);
+    border: none;
+    color: #0a0e14;
+    padding: 7px 14px;
+    border-radius: 3px;
+    font-family: inherit;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .bulk-bar button:hover { background: #e3a000; }
+  .bulk-bar button.secondary {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .bulk-bar button.secondary:hover { border-color: var(--text); color: var(--text); }
+  table input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+  table th.sel, table td.sel { width: 32px; padding-right: 4px; }
   .copy-link {
     margin-top: 8px;
     padding: 8px 12px;
@@ -246,9 +284,28 @@
             <option value="true">Has IP</option>
             <option value="false">No IP</option>
           </select>
+          <select id="filterExpiring" title="Show subscribers whose subscription is ending soon">
+            <option value="">Any expiry</option>
+            <option value="expired">Expired</option>
+            <option value="7">≤ 7 days</option>
+            <option value="14">≤ 14 days</option>
+            <option value="30">≤ 30 days</option>
+            <option value="60">≤ 60 days</option>
+          </select>
         </div>
+
+        <div class="bulk-bar" id="bulkBar">
+          <span id="bulkCount">0 selected</span>
+          <span style="flex:1"></span>
+          <button id="bulkSendBtn">Send reminder</button>
+          <button id="bulkClearBtn" class="secondary">Clear</button>
+        </div>
+
         <table>
-          <thead><tr><th>Email</th><th>Name</th><th>IP</th><th>Expires</th></tr></thead>
+          <thead><tr>
+            <th class="sel"><input type="checkbox" id="selectAll" title="Select all visible" /></th>
+            <th>Email</th><th>Name</th><th>IP</th><th>Expires</th>
+          </tr></thead>
           <tbody id="subscriberRows"></tbody>
         </table>
         <div id="emptyMsg" class="empty" style="display:none;">No subscribers yet.</div>
@@ -363,6 +420,7 @@ const TOKEN_KEY = "pl_admin_token";
 let token = sessionStorage.getItem(TOKEN_KEY) || "";
 let currentSubscriber = null;
 let currentList = [];
+const selected = new Set();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function $(id) { return document.getElementById(id); }
@@ -478,13 +536,18 @@ async function loadSubscribers() {
   const q = $("filterQ").value.trim();
   const c = $("filterCountry").value.trim();
   const ip = $("filterIp").value;
+  const exp = $("filterExpiring").value;
   if (q) params.set("q", q);
   if (c) params.set("country", c);
   if (ip) params.set("has_ip", ip);
+  if (exp) params.set("expiring", exp);
   try {
     const data = await api("/admin/subscribers" + (params.toString() ? "?" + params : ""));
     currentList = data.subscribers || [];
+    // Drop selections for ids that are no longer in the result set
+    for (const id of [...selected]) if (!currentList.some(s => s.id === id)) selected.delete(id);
     renderList();
+    updateBulkBar();
   } catch (err) { showToast(err.message, "err"); }
 }
 
@@ -513,7 +576,10 @@ function renderList() {
       ? `<span class="ip-pill unlocked">unlocked</span>`
       : `<span class="ip-pill set" title="${escape(s.captured_ip)}">${escape(s.captured_ip)}</span>`;
     const name = ((s.first_name || "") + " " + (s.last_name || "")).trim() || "—";
+    const isSel = selected.has(s.id);
+    const canRemind = !!s.subscription_end;
     return `<tr class="row${currentSubscriber && currentSubscriber.id === s.id ? " active" : ""}" data-id="${s.id}">
+      <td class="sel"><input type="checkbox" class="rowSel" data-id="${s.id}" ${isSel ? "checked" : ""} ${canRemind ? "" : "disabled title='No end date'"} /></td>
       <td>${escape(s.email)}</td>
       <td>${escape(name)}</td>
       <td>${ipHtml}</td>
@@ -522,12 +588,81 @@ function renderList() {
   }).join("");
   $("emptyMsg").style.display = currentList.length === 0 ? "block" : "none";
   tb.querySelectorAll("tr.row").forEach(tr => {
-    tr.addEventListener("click", () => loadOne(Number(tr.dataset.id)));
+    tr.addEventListener("click", (e) => {
+      // Clicks on the checkbox cell shouldn't open the detail panel
+      if (e.target.tagName === "INPUT" || e.target.classList.contains("sel")) return;
+      loadOne(Number(tr.dataset.id));
+    });
   });
+  tb.querySelectorAll(".rowSel").forEach(cb => {
+    cb.addEventListener("change", (e) => {
+      const id = Number(e.target.dataset.id);
+      if (e.target.checked) selected.add(id); else selected.delete(id);
+      updateBulkBar();
+      syncSelectAllCheckbox();
+    });
+  });
+  syncSelectAllCheckbox();
 }
 
-["filterQ", "filterCountry", "filterIp"].forEach(id => {
+function selectableIds() {
+  return currentList.filter(s => s.subscription_end).map(s => s.id);
+}
+
+function syncSelectAllCheckbox() {
+  const eligible = selectableIds();
+  const all = eligible.length > 0 && eligible.every(id => selected.has(id));
+  const some = eligible.some(id => selected.has(id));
+  const cb = $("selectAll");
+  cb.checked = all;
+  cb.indeterminate = some && !all;
+  cb.disabled = eligible.length === 0;
+}
+
+function updateBulkBar() {
+  const n = selected.size;
+  $("bulkBar").className = "bulk-bar" + (n > 0 ? " show" : "");
+  $("bulkCount").textContent = `${n} selected`;
+}
+
+["filterQ", "filterCountry", "filterIp", "filterExpiring"].forEach(id => {
   $(id).addEventListener("input", debounce(loadSubscribers, 250));
+  $(id).addEventListener("change", loadSubscribers);
+});
+
+// Select-all toggles every visible row that has an end date
+$("selectAll").addEventListener("change", (e) => {
+  const eligible = selectableIds();
+  if (e.target.checked) eligible.forEach(id => selected.add(id));
+  else eligible.forEach(id => selected.delete(id));
+  renderList();
+  updateBulkBar();
+});
+
+$("bulkClearBtn").addEventListener("click", () => {
+  selected.clear();
+  renderList();
+  updateBulkBar();
+});
+
+$("bulkSendBtn").addEventListener("click", async () => {
+  const ids = [...selected];
+  if (ids.length === 0) return;
+  if (!confirm(`Send subscription-expiry reminder to ${ids.length} subscriber${ids.length === 1 ? "" : "s"}?`)) return;
+  $("bulkSendBtn").disabled = true;
+  try {
+    const d = await api("/admin/subscribers/bulk-send-reminder", {
+      method: "POST", body: JSON.stringify({ ids }),
+    });
+    const msg = d.mailer_configured
+      ? `Sent ${d.sent} reminder${d.sent === 1 ? "" : "s"}` + (d.failed.length ? ` · ${d.failed.length} failed` : "")
+      : `Logged ${d.sent} reminder payload${d.sent === 1 ? "" : "s"} to service.log (Resend not configured)` + (d.failed.length ? ` · ${d.failed.length} failed` : "");
+    showToast(msg, d.failed.length ? "err" : "ok");
+    selected.clear();
+    loadSubscribers();
+    if (currentSubscriber) loadOne(currentSubscriber.id);
+  } catch (err) { showToast(err.message, "err"); }
+  $("bulkSendBtn").disabled = false;
 });
 
 function debounce(fn, ms) {
