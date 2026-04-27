@@ -135,6 +135,12 @@
   .ip-pill.unset { background: rgba(255,107,107,0.15); color: var(--red); }
   .ip-pill.unlocked { background: rgba(77,212,224,0.15); color: var(--cyan); }
 
+  .sub-pill { font-family: var(--mono); font-size: 10px; padding: 2px 6px; border-radius: 2px; }
+  .sub-pill.ok { background: rgba(92,217,137,0.15); color: var(--green); }
+  .sub-pill.soon { background: rgba(255,180,0,0.15); color: var(--accent); }
+  .sub-pill.exp { background: rgba(255,107,107,0.15); color: var(--red); }
+  .sub-pill.none { background: rgba(74,85,104,0.20); color: var(--text-faint); }
+
   /* Detail / form panel */
   .form-row { margin-bottom: 12px; }
   .form-row label { display: block; font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
@@ -242,7 +248,7 @@
           </select>
         </div>
         <table>
-          <thead><tr><th>Email</th><th>Name</th><th>IP</th></tr></thead>
+          <thead><tr><th>Email</th><th>Name</th><th>IP</th><th>Expires</th></tr></thead>
           <tbody id="subscriberRows"></tbody>
         </table>
         <div id="emptyMsg" class="empty" style="display:none;">No subscribers yet.</div>
@@ -274,6 +280,12 @@
           <div class="form-row"><label>Mailing address</label><textarea id="fAddress"></textarea></div>
           <div class="form-row"><label>Country</label><input id="fCountry" /></div>
 
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-row"><label>Subscription start</label><input id="fSubStart" type="date" /></div>
+            <div class="form-row"><label>Subscription end</label><input id="fSubEnd" type="date" /></div>
+          </div>
+          <div id="subStatusLine" style="margin-top:-4px;margin-bottom:14px;font-family:var(--mono);font-size:11px;color:var(--text-dim);"></div>
+
           <h3 style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin: 16px 0 8px;">Dx apps</h3>
           <div class="checks" id="formDx"></div>
 
@@ -296,6 +308,7 @@
 
           <div class="row-actions">
             <button id="saveBtn">Save</button>
+            <button id="sendReminderBtn">Send expiry reminder now</button>
             <button id="resetIpBtn">Reset captured IP</button>
             <button id="resendSetPwBtn">Send new set-password link</button>
             <button id="cancelBtn">Cancel</button>
@@ -475,6 +488,22 @@ async function loadSubscribers() {
   } catch (err) { showToast(err.message, "err"); }
 }
 
+function daysUntil(iso) {
+  if (!iso) return null;
+  const today = new Date(); today.setUTCHours(0,0,0,0);
+  const end = new Date(iso + "T00:00:00Z");
+  return Math.round((end.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+function expiryPill(iso) {
+  const days = daysUntil(iso);
+  if (days === null) return `<span class="sub-pill none">no end set</span>`;
+  if (days < 0) return `<span class="sub-pill exp" title="${escape(iso)}">expired ${-days}d ago</span>`;
+  if (days === 0) return `<span class="sub-pill exp" title="${escape(iso)}">expires today</span>`;
+  if (days <= 14) return `<span class="sub-pill soon" title="${escape(iso)}">in ${days}d</span>`;
+  return `<span class="sub-pill ok" title="${escape(iso)}">in ${days}d</span>`;
+}
+
 function renderList() {
   const tb = $("subscriberRows");
   tb.innerHTML = currentList.map(s => {
@@ -488,6 +517,7 @@ function renderList() {
       <td>${escape(s.email)}</td>
       <td>${escape(name)}</td>
       <td>${ipHtml}</td>
+      <td>${expiryPill(s.subscription_end)}</td>
     </tr>`;
   }).join("");
   $("emptyMsg").style.display = currentList.length === 0 ? "block" : "none";
@@ -508,15 +538,17 @@ function debounce(fn, ms) {
 $("newSubscriberBtn").addEventListener("click", () => {
   currentSubscriber = null;
   $("editTitle").textContent = "New subscriber";
-  ["fEmail","fFirst","fLast","fAddress","fCountry"].forEach(id => $(id).value = "");
+  ["fEmail","fFirst","fLast","fAddress","fCountry","fSubStart","fSubEnd"].forEach(id => $(id).value = "");
   writeChecks("fdx", []);
   writeChecks("ftx", []);
   $("fIpLocked").checked = true;
   $("ipDisplay").style.display = "none";
   $("setPwLink").style.display = "none";
+  $("subStatusLine").textContent = "";
   $("deleteBtn").style.display = "none";
   $("resetIpBtn").style.display = "none";
   $("resendSetPwBtn").style.display = "none";
+  $("sendReminderBtn").style.display = "none";
   $("defaultPane").style.display = "none";
   $("editPane").style.display = "block";
   renderList();
@@ -540,9 +572,28 @@ function populateForm(s) {
   $("fLast").value = s.last_name || "";
   $("fAddress").value = s.mailing_address || "";
   $("fCountry").value = s.country || "";
+  $("fSubStart").value = s.subscription_start || "";
+  $("fSubEnd").value = s.subscription_end || "";
   writeChecks("fdx", s.dx_apps || []);
   writeChecks("ftx", s.tx_apps || []);
   $("fIpLocked").checked = !!s.ip_locked;
+
+  // Subscription status line
+  const days = daysUntil(s.subscription_end);
+  let line = "";
+  if (s.subscription_end) {
+    if (days < 0) line = `Subscription expired ${-days} days ago.`;
+    else if (days === 0) line = "Subscription expires today.";
+    else line = `Subscription expires in ${days} day${days === 1 ? "" : "s"}.`;
+  }
+  if (s.last_reminder_sent_at) {
+    line += ` Last reminder: ${new Date(s.last_reminder_sent_at).toISOString().slice(0,16).replace("T"," ")} UTC.`;
+  }
+  if ((s.reminders_sent || []).length) {
+    line += ` Milestones sent: [${(s.reminders_sent || []).join(", ")}].`;
+  }
+  $("subStatusLine").textContent = line;
+
   if (s.captured_ip) {
     $("ipDisplay").style.display = "block";
     $("ipDisplayValue").textContent = s.captured_ip + (s.last_login_at ? ` · last login ${new Date(s.last_login_at).toISOString().slice(0,16).replace("T"," ")}` : "");
@@ -554,6 +605,7 @@ function populateForm(s) {
   $("setPwLink").style.display = "none";
   $("deleteBtn").style.display = "inline-block";
   $("resendSetPwBtn").style.display = s.has_password ? "none" : "inline-block";
+  $("sendReminderBtn").style.display = s.subscription_end ? "inline-block" : "none";
 }
 
 $("cancelBtn").addEventListener("click", () => {
@@ -570,6 +622,8 @@ $("saveBtn").addEventListener("click", async () => {
     last_name: $("fLast").value.trim(),
     mailing_address: $("fAddress").value.trim(),
     country: $("fCountry").value.trim(),
+    subscription_start: $("fSubStart").value || null,
+    subscription_end: $("fSubEnd").value || null,
     dx_apps: readChecks("fdx"),
     tx_apps: readChecks("ftx"),
     ip_locked: $("fIpLocked").checked,
@@ -616,6 +670,23 @@ $("resetIpBtn").addEventListener("click", async () => {
   try {
     await api("/admin/subscribers/" + currentSubscriber.id + "/reset-ip", { method: "POST" });
     showToast("IP cleared", "ok");
+    loadOne(currentSubscriber.id);
+    loadSubscribers();
+  } catch (err) { showToast(err.message, "err"); }
+});
+
+$("sendReminderBtn").addEventListener("click", async () => {
+  if (!currentSubscriber) return;
+  if (!currentSubscriber.subscription_end) {
+    showToast("Set a subscription end date first", "err");
+    return;
+  }
+  try {
+    const d = await api("/admin/subscribers/" + currentSubscriber.id + "/send-reminder", { method: "POST" });
+    const msg = d.mailer_configured
+      ? `Reminder emailed (${d.days_left} days left)`
+      : `Reminder logged to service.log (Resend not configured · ${d.days_left} days left)`;
+    showToast(msg, "ok");
     loadOne(currentSubscriber.id);
     loadSubscribers();
   } catch (err) { showToast(err.message, "err"); }
