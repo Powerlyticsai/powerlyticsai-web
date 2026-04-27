@@ -284,6 +284,161 @@
   body.fs-tab .fs-btn {
     display: inline-flex;
   }
+
+  /* Subscribers Only button — header */
+  .sub-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+  }
+  .sub-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .sub-btn:active { transform: scale(0.97); }
+  .sub-btn.signed-in { border-color: var(--green); color: var(--green); }
+
+  /* Login modal */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 14, 20, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 32px;
+    width: 100%;
+    max-width: 420px;
+    margin: 24px;
+    position: relative;
+  }
+  .modal-card h3 {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .modal-card .lede {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 22px;
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px; right: 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    width: 28px; height: 28px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 18px;
+  }
+  .modal-close:hover { color: var(--accent); }
+  .modal-card label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  .modal-card input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 3px;
+    font-family: var(--body);
+    font-size: 14px;
+  }
+  .modal-card input:focus { outline: none; border-color: var(--accent); }
+  .modal-card .err {
+    margin-top: 14px;
+    color: var(--red);
+    font-size: 12px;
+    font-family: var(--mono);
+    min-height: 16px;
+  }
+  .modal-card .ip-block {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(255,107,107,0.08);
+    border: 1px solid rgba(255,107,107,0.4);
+    border-radius: 3px;
+    color: var(--red);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .modal-card .ok-msg {
+    margin-top: 14px;
+    color: var(--green);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .modal-card button.primary {
+    width: 100%;
+    margin-top: 22px;
+    padding: 11px 18px;
+    background: var(--accent);
+    color: #0a0e14;
+    border: none;
+    border-radius: 3px;
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .modal-card button.primary:hover { background: #e3a000; }
+  .modal-card button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .modal-card .modal-link {
+    display: block;
+    margin-top: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+  .modal-card .modal-link:hover { color: var(--accent); }
+  .modal-card .panel-hidden { display: none; }
+  .signed-in-list {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: rgba(92,217,137,0.06);
+    border: 1px solid rgba(92,217,137,0.3);
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  .signed-in-list strong { color: var(--green); font-family: var(--mono); }
   .fs-btn:hover {
     background: var(--accent);
     color: #0a0e14;
@@ -795,6 +950,13 @@
         </svg>
         <span>Fullscreen</span>
       </button>
+      <button class="sub-btn" type="button" id="subscribersBtn">
+        <svg viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
+          <path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0z"></path>
+          <path d="M3 21a9 9 0 0 1 18 0"></path>
+        </svg>
+        <span id="subscribersBtnLabel">Subscribers Only</span>
+      </button>
       <div class="status">
         <span class="status-dot"></span>
         <span>Systems Online</span>
@@ -960,6 +1122,51 @@
     <span>Grid Intelligence · Built for Engineers</span>
   </footer>
 
+</div>
+
+<!-- ─── SUBSCRIBERS LOGIN MODAL ───────────── -->
+<div class="modal-backdrop" id="subModal" role="dialog" aria-modal="true" aria-labelledby="subModalTitle">
+  <div class="modal-card">
+    <button class="modal-close" id="subModalClose" aria-label="Close">×</button>
+
+    <!-- LOGIN PANEL -->
+    <div id="loginPanel">
+      <h3 id="subModalTitle">Subscribers Only</h3>
+      <p class="lede">Sign in to access your subscribed apps</p>
+      <form id="subLoginForm" autocomplete="on">
+        <label for="subEmail">Email</label>
+        <input id="subEmail" type="email" required autocomplete="username" />
+        <label for="subPassword">Password</label>
+        <input id="subPassword" type="password" required autocomplete="current-password" />
+        <div class="err" id="subErr"></div>
+        <div class="ip-block panel-hidden" id="ipBlock"></div>
+        <button type="submit" class="primary" id="subSubmit">Sign in</button>
+      </form>
+      <a class="modal-link" id="forgotLink">Forgot password?</a>
+    </div>
+
+    <!-- FORGOT PASSWORD PANEL -->
+    <div id="forgotPanel" class="panel-hidden">
+      <h3>Reset password</h3>
+      <p class="lede">Enter your email to get a reset link</p>
+      <form id="forgotForm">
+        <label for="forgotEmail">Email</label>
+        <input id="forgotEmail" type="email" required />
+        <div class="err" id="forgotErr"></div>
+        <div class="ok-msg panel-hidden" id="forgotOk">If that email is on file, a reset link is on its way.</div>
+        <button type="submit" class="primary" id="forgotSubmit">Send reset link</button>
+      </form>
+      <a class="modal-link" id="backToLoginLink">← Back to sign in</a>
+    </div>
+
+    <!-- SIGNED-IN PANEL -->
+    <div id="signedInPanel" class="panel-hidden">
+      <h3>Signed in</h3>
+      <p class="lede" id="signedInWho"></p>
+      <div class="signed-in-list" id="signedInApps"></div>
+      <button type="button" class="primary" id="signOutBtn">Sign out</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1179,6 +1386,184 @@
   // The anchor's href + download attribute handle the PDF download natively.
   // Gating is handled by .whitepaper.unlocked — clicks on the disabled card
   // don't reach the anchor because it's pointer-events:none until unlocked.
+
+  // ─── SUBSCRIBERS AUTH ─────────────────
+  // Shared cookie on .powerlyticsai.com so dx + tx subdomains can read it too.
+  const ADMIN_API = 'https://admin-api.powerlyticsai.com';
+  const COOKIE_NAME = 'pl_session';
+
+  function getCookie(name) {
+    const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function setSessionCookie(token) {
+    const maxAge = 12 * 60 * 60; // 12 hours, matches JWT TTL
+    document.cookie = `${COOKIE_NAME}=${encodeURIComponent(token)}; Domain=.powerlyticsai.com; Path=/; Max-Age=${maxAge}; Secure; SameSite=Lax`;
+  }
+  function clearSessionCookie() {
+    document.cookie = `${COOKIE_NAME}=; Domain=.powerlyticsai.com; Path=/; Max-Age=0; Secure; SameSite=Lax`;
+    sessionStorage.removeItem('pl_subscriber');
+  }
+
+  const subscribersBtn = document.getElementById('subscribersBtn');
+  const subscribersBtnLabel = document.getElementById('subscribersBtnLabel');
+  const subModal = document.getElementById('subModal');
+  const subModalClose = document.getElementById('subModalClose');
+  const loginPanel = document.getElementById('loginPanel');
+  const forgotPanel = document.getElementById('forgotPanel');
+  const signedInPanel = document.getElementById('signedInPanel');
+  const subErr = document.getElementById('subErr');
+  const ipBlock = document.getElementById('ipBlock');
+  const forgotErr = document.getElementById('forgotErr');
+  const forgotOk = document.getElementById('forgotOk');
+
+  function showPanel(which) {
+    [loginPanel, forgotPanel, signedInPanel].forEach(p => p.classList.add('panel-hidden'));
+    which.classList.remove('panel-hidden');
+  }
+  function openModal() { subModal.classList.add('show'); }
+  function closeModal() {
+    subModal.classList.remove('show');
+    subErr.textContent = '';
+    ipBlock.classList.add('panel-hidden');
+    ipBlock.textContent = '';
+    forgotErr.textContent = '';
+    forgotOk.classList.add('panel-hidden');
+  }
+
+  function refreshHeaderState() {
+    const tok = getCookie(COOKIE_NAME);
+    const cached = sessionStorage.getItem('pl_subscriber');
+    let sub = null;
+    try { sub = cached ? JSON.parse(cached) : null; } catch {}
+    if (tok && sub) {
+      subscribersBtn.classList.add('signed-in');
+      subscribersBtnLabel.textContent = sub.first_name ? `Hi, ${sub.first_name}` : 'Signed in';
+    } else {
+      subscribersBtn.classList.remove('signed-in');
+      subscribersBtnLabel.textContent = 'Subscribers Only';
+    }
+  }
+
+  function fillSignedInPanel(sub) {
+    document.getElementById('signedInWho').textContent = sub.email || '';
+    const dx = (sub.dx_apps && sub.dx_apps.length) ? sub.dx_apps.join(', ') : 'default apps';
+    const tx = (sub.tx_apps && sub.tx_apps.length) ? sub.tx_apps.join(', ') : 'default apps';
+    document.getElementById('signedInApps').innerHTML =
+      `<div><strong>Dx:</strong> ${escapeHtml(dx)}</div>` +
+      `<div style="margin-top:6px;"><strong>Tx:</strong> ${escapeHtml(tx)}</div>`;
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;',
+    }[c]));
+  }
+
+  subscribersBtn.addEventListener('click', () => {
+    const tok = getCookie(COOKIE_NAME);
+    const cached = sessionStorage.getItem('pl_subscriber');
+    if (tok && cached) {
+      try { fillSignedInPanel(JSON.parse(cached)); } catch {}
+      showPanel(signedInPanel);
+    } else {
+      showPanel(loginPanel);
+    }
+    openModal();
+  });
+  subModalClose.addEventListener('click', closeModal);
+  subModal.addEventListener('click', (e) => { if (e.target === subModal) closeModal(); });
+
+  document.getElementById('forgotLink').addEventListener('click', () => {
+    forgotErr.textContent = '';
+    forgotOk.classList.add('panel-hidden');
+    showPanel(forgotPanel);
+  });
+  document.getElementById('backToLoginLink').addEventListener('click', () => {
+    subErr.textContent = '';
+    showPanel(loginPanel);
+  });
+
+  // Sign-in
+  document.getElementById('subLoginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    subErr.textContent = '';
+    ipBlock.classList.add('panel-hidden');
+    const btn = document.getElementById('subSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+    try {
+      const r = await fetch(ADMIN_API + '/subscribers/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('subEmail').value.trim(),
+          password: document.getElementById('subPassword').value,
+        }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (data.reason === 'ip_mismatch') {
+          ipBlock.textContent = data.error || 'Your system is not recognized as a valid subscriber\'s system. Please contact admin.';
+          ipBlock.classList.remove('panel-hidden');
+        } else {
+          subErr.textContent = data.error || 'Sign-in failed';
+        }
+        return;
+      }
+      setSessionCookie(data.token);
+      sessionStorage.setItem('pl_subscriber', JSON.stringify(data.subscriber));
+      refreshHeaderState();
+      fillSignedInPanel(data.subscriber);
+      showPanel(signedInPanel);
+      // If Dx or Tx tab is currently rendered, postMessage so iframes pick up perms without reload.
+      try {
+        const iframes = document.querySelectorAll('.embed-frame iframe');
+        iframes.forEach(f => f.contentWindow?.postMessage({ type: 'pl-auth-changed' }, '*'));
+      } catch {}
+    } catch (err) {
+      subErr.textContent = 'Network error: ' + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    }
+  });
+
+  // Sign-out
+  document.getElementById('signOutBtn').addEventListener('click', () => {
+    clearSessionCookie();
+    refreshHeaderState();
+    showPanel(loginPanel);
+    closeModal();
+    try {
+      const iframes = document.querySelectorAll('.embed-frame iframe');
+      iframes.forEach(f => f.contentWindow?.postMessage({ type: 'pl-auth-changed' }, '*'));
+    } catch {}
+  });
+
+  // Forgot-password
+  document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    forgotErr.textContent = '';
+    forgotOk.classList.add('panel-hidden');
+    const btn = document.getElementById('forgotSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      await fetch(ADMIN_API + '/subscribers/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: document.getElementById('forgotEmail').value.trim() }),
+      });
+      forgotOk.classList.remove('panel-hidden');
+    } catch (err) {
+      forgotErr.textContent = 'Network error: ' + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send reset link';
+    }
+  });
+
+  refreshHeaderState();
 
   // ─── ACTIVITY TRACKING ─────────────────
   // Posts lightweight events to /api/activity on page load, tab change, and
