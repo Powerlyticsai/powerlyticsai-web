@@ -1172,33 +1172,58 @@
   });
   applyTabMode(document.querySelector('.tab.active')?.dataset.panel);
 
-  // ─── FEATURE FLAGS ────────────────────
-  // Hide Powerlytics-Dx and / or Powerlytics-Tx tab + panel based on the
-  // public feature flags managed in /admin. If the previously-active tab
-  // is undeployed, fall back to whichever is still visible (or Feedback).
+  // ─── FEATURE FLAGS + SUBSCRIBER OVERRIDE ────────────────────
+  // A tab is visible if EITHER:
+  //   - the public feature flag for it is on (deployed in /admin), OR
+  //   - the signed-in subscriber has at least one app permitted in that section.
+  // This means a paying subscriber can still reach apps they're entitled to
+  // even when the tab is "undeployed" for the general public.
+  let cachedFeatureFlags = null;
+  let featureFlagsLoaded = false;
+
+  function setTabVisible(panelId, visible) {
+    const tabBtn = document.querySelector(`.tab[data-panel="${panelId}"]`);
+    const panel = document.getElementById(panelId);
+    if (tabBtn) tabBtn.style.display = visible ? '' : 'none';
+    if (panel) panel.style.display = visible ? '' : 'none';
+  }
+
+  function applyTabVisibility() {
+    const flags = cachedFeatureFlags || { dx_enabled: true, tx_enabled: true };
+
+    // Read subscriber's permissions from sessionStorage (populated at login).
+    let subDx = [], subTx = [];
+    try {
+      const tok = getCookie(COOKIE_NAME);
+      const cached = sessionStorage.getItem('pl_subscriber');
+      if (tok && cached) {
+        const sub = JSON.parse(cached);
+        subDx = Array.isArray(sub.dx_apps) ? sub.dx_apps : [];
+        subTx = Array.isArray(sub.tx_apps) ? sub.tx_apps : [];
+      }
+    } catch { /* ignore */ }
+
+    setTabVisible('dx', !!flags.dx_enabled || subDx.length > 0);
+    setTabVisible('tx', !!flags.tx_enabled || subTx.length > 0);
+
+    // If the active tab just got hidden, switch to the first visible one.
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab && activeTab.style.display === 'none') {
+      const fallback = Array.from(document.querySelectorAll('.tab'))
+        .find((t) => t.style.display !== 'none');
+      if (fallback) fallback.click();
+    }
+  }
+
   (function () {
     fetch('https://admin-api.powerlyticsai.com/public/features', { cache: 'no-store' })
       .then((r) => r.ok ? r.json() : null)
       .then((flags) => {
-        if (!flags) return;
-        const hide = (panelId) => {
-          const tabBtn = document.querySelector(`.tab[data-panel="${panelId}"]`);
-          const panel = document.getElementById(panelId);
-          if (tabBtn) tabBtn.style.display = 'none';
-          if (panel) panel.style.display = 'none';
-        };
-        if (flags.dx_enabled === false) hide('dx');
-        if (flags.tx_enabled === false) hide('tx');
-
-        // If the active tab just got hidden, switch to the first visible one.
-        const activeTab = document.querySelector('.tab.active');
-        if (activeTab && activeTab.style.display === 'none') {
-          const fallback = Array.from(document.querySelectorAll('.tab'))
-            .find((t) => t.style.display !== 'none');
-          if (fallback) fallback.click();
-        }
+        if (flags) cachedFeatureFlags = flags;
+        featureFlagsLoaded = true;
+        applyTabVisibility();
       })
-      .catch(() => { /* swallow — feature flags are best-effort */ });
+      .catch(() => { featureFlagsLoaded = true; applyTabVisibility(); });
   })();
 
   // ─── FULLSCREEN BUTTON (HEADER) ────────
@@ -1518,6 +1543,7 @@
       setSessionCookie(data.token);
       sessionStorage.setItem('pl_subscriber', JSON.stringify(data.subscriber));
       refreshHeaderState();
+      applyTabVisibility();
       fillSignedInPanel(data.subscriber);
       showPanel(signedInPanel);
       // If Dx or Tx tab is currently rendered, postMessage so iframes pick up perms without reload.
@@ -1537,6 +1563,7 @@
   document.getElementById('signOutBtn').addEventListener('click', () => {
     clearSessionCookie();
     refreshHeaderState();
+    applyTabVisibility();
     showPanel(loginPanel);
     closeModal();
     try {
