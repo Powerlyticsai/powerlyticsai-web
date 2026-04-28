@@ -1036,25 +1036,7 @@
           <textarea id="comment" placeholder="What worked, what didn't, what would you change?" maxlength="1000"></textarea>
           <div class="char-count"><span id="charCount">0</span> / 1000</div>
 
-          <label class="form-label" for="nextApp" style="margin-top: 24px;">Which application would you like to see next?<span class="req">*</span></label>
-          <select id="nextApp" class="text-input">
-            <option value="" disabled selected>Select a Distribution app…</option>
-            <option value="Fault Study">Fault Study</option>
-            <option value="Arc Flash">Arc Flash</option>
-            <option value="Hosting Capacity">Hosting Capacity</option>
-            <option value="Interconnection Analysis">Interconnection Analysis</option>
-            <option value="DERMS">DERMS</option>
-            <option value="Asset Management">Asset Management</option>
-            <option value="Utility Investment Planning">Utility Investment Planning</option>
-            <option value="Utility Commission Report Generator">Utility Commission Report Generator</option>
-            <option value="Load Forecast">Load Forecast</option>
-            <option value="Model Builder">Model Builder</option>
-            <option value="Data Quality Auditor">Data Quality Auditor</option>
-            <option value="Reliability and Resiliency Analysis">Reliability and Resiliency Analysis</option>
-            <option value="Virtual Distribution Planner Agent">Virtual Distribution Planner Agent</option>
-          </select>
-
-          <div class="section-divider">
+          <div class="section-divider" style="margin-top: 24px;">
             <span class="divider-label">Contact Info · Required for whitepaper</span>
           </div>
 
@@ -1290,10 +1272,6 @@
     validateForm();
   });
 
-  // ─── NEXT APP SELECT ───────────────────
-  const nextApp = document.getElementById('nextApp');
-  nextApp.addEventListener('change', validateForm);
-
   // ─── CONTACT FIELDS ────────────────────
   const nameEl = document.getElementById('name');
   const companyEl = document.getElementById('company');
@@ -1339,7 +1317,6 @@
     const valid =
       currentRating > 0
       && comment.value.trim().length > 0
-      && nextApp.value.trim().length > 0
       && nameEl.value.trim().length > 0
       && companyEl.value.trim().length > 0
       && isValidEmail(emailEl.value)
@@ -1365,7 +1342,6 @@
       rating: currentRating,
       rating_label: ratingWords[currentRating],
       comment: comment.value.trim(),
-      next_app_request: nextApp.value.trim(),
       name: nameEl.value.trim(),
       company: companyEl.value.trim(),
       email: emailEl.value.trim(),

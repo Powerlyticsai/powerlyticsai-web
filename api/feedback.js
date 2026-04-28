@@ -3,7 +3,7 @@
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[+\d][\d\s\-().]{6,}$/;
-const REQUIRED = ["rating", "comment", "next_app_request", "name", "company", "email", "phone"];
+const REQUIRED = ["rating", "comment", "name", "company", "email", "phone"];
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
