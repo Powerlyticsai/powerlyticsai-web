@@ -1190,6 +1190,35 @@
   });
   applyTabMode(document.querySelector('.tab.active')?.dataset.panel);
 
+  // ─── FEATURE FLAGS ────────────────────
+  // Hide Powerlytics-Dx and / or Powerlytics-Tx tab + panel based on the
+  // public feature flags managed in /admin. If the previously-active tab
+  // is undeployed, fall back to whichever is still visible (or Feedback).
+  (function () {
+    fetch('https://admin-api.powerlyticsai.com/public/features', { cache: 'no-store' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((flags) => {
+        if (!flags) return;
+        const hide = (panelId) => {
+          const tabBtn = document.querySelector(`.tab[data-panel="${panelId}"]`);
+          const panel = document.getElementById(panelId);
+          if (tabBtn) tabBtn.style.display = 'none';
+          if (panel) panel.style.display = 'none';
+        };
+        if (flags.dx_enabled === false) hide('dx');
+        if (flags.tx_enabled === false) hide('tx');
+
+        // If the active tab just got hidden, switch to the first visible one.
+        const activeTab = document.querySelector('.tab.active');
+        if (activeTab && activeTab.style.display === 'none') {
+          const fallback = Array.from(document.querySelectorAll('.tab'))
+            .find((t) => t.style.display !== 'none');
+          if (fallback) fallback.click();
+        }
+      })
+      .catch(() => { /* swallow — feature flags are best-effort */ });
+  })();
+
   // ─── FULLSCREEN BUTTON (HEADER) ────────
   const headerFsBtn = document.getElementById('headerFsBtn');
   if (headerFsBtn) {

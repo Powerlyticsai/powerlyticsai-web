@@ -228,6 +228,45 @@
   .bulk-bar button.secondary:hover { border-color: var(--text); color: var(--text); }
   table input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
   table th.sel, table td.sel { width: 32px; padding-right: 4px; }
+
+  /* Tab on/off toggles */
+  .tab-toggles { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .toggle-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .toggle-row input { accent-color: var(--accent); width: 16px; height: 16px; }
+  .toggle-label { color: var(--text); flex: 1; }
+  .toggle-state {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+  .toggle-state.on  { background: rgba(92,217,137,0.15); color: var(--green); }
+  .toggle-state.off { background: rgba(255,107,107,0.15); color: var(--red); }
+
+  /* Admins table */
+  #adminsTable td .danger {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-dim);
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+  #adminsTable td .danger:hover { border-color: var(--red); color: var(--red); }
   .copy-link {
     margin-top: 8px;
     padding: 8px 12px;
@@ -320,6 +359,28 @@
       <!-- RIGHT: detail / edit form -->
       <div class="panel" id="detailPanel">
         <div id="defaultPane">
+
+          <!-- Tab visibility (deploy / undeploy on the marketing site) -->
+          <h2>Tabs on powerlyticsai.com</h2>
+          <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 14px;">
+            Toggle off to hide a tab + its iframe entirely on the public site.
+          </p>
+          <div class="tab-toggles">
+            <label class="toggle-row">
+              <input type="checkbox" id="featDx" />
+              <span class="toggle-label">Powerlytics-Dx tab</span>
+              <span class="toggle-state" id="featDxState">—</span>
+            </label>
+            <label class="toggle-row">
+              <input type="checkbox" id="featTx" />
+              <span class="toggle-label">Powerlytics-Tx tab</span>
+              <span class="toggle-state" id="featTxState">—</span>
+            </label>
+          </div>
+          <button class="primary" id="saveFeaturesBtn" style="width:auto; margin-top: 14px;">Save tab settings</button>
+
+          <div class="section-divider" style="height:1px; background:var(--border); margin:24px 0;"></div>
+
           <h2>Defaults — non-subscribers</h2>
           <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 14px;">
             Apps available to anyone who hasn't signed in.
@@ -329,6 +390,26 @@
           <h3 style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin: 18px 0 8px;">Tx apps</h3>
           <div class="checks" id="defaultsTx"></div>
           <button class="primary" id="saveDefaultsBtn" style="width:auto; margin-top: 18px;">Save defaults</button>
+
+          <div class="section-divider" style="height:1px; background:var(--border); margin:24px 0;"></div>
+
+          <!-- Additional admins -->
+          <h2>Admins</h2>
+          <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 12px;">
+            The root admin (env var) is always honoured. Add more accounts here.
+          </p>
+          <div id="rootAdminLine" style="font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-bottom: 10px;"></div>
+          <table id="adminsTable">
+            <thead><tr><th>Email</th><th>Added</th><th></th></tr></thead>
+            <tbody id="adminsRows"></tbody>
+          </table>
+          <div id="noAdmins" class="empty" style="display:none;">No additional admins yet.</div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-top: 12px; align-items: end;">
+            <div class="form-row" style="margin:0;"><label>New admin email</label><input id="newAdminEmail" type="email" /></div>
+            <div class="form-row" style="margin:0;"><label>Password (≥8 chars)</label><input id="newAdminPw" type="password" autocomplete="new-password" /></div>
+            <button class="primary" id="addAdminBtn" style="height: 36px;">Add admin</button>
+          </div>
         </div>
 
         <div id="editPane" style="display:none;">
@@ -461,6 +542,8 @@ function showDash(email) {
   buildDefaultsCheckboxes();
   loadDefaults();
   loadSubscribers();
+  loadFeatures();
+  loadAdmins();
 }
 
 $("loginForm").addEventListener("submit", async (e) => {
@@ -530,6 +613,96 @@ $("saveDefaultsBtn").addEventListener("click", async () => {
       }),
     });
     showToast("Defaults saved", "ok");
+  } catch (err) { showToast(err.message, "err"); }
+});
+
+// ── Feature flags (Dx + Tx tab visibility) ─────────────────────────────────
+async function loadFeatures() {
+  try {
+    const data = await api("/admin/features");
+    setFeatureToggle("featDx", "featDxState", data.dx_enabled);
+    setFeatureToggle("featTx", "featTxState", data.tx_enabled);
+  } catch (err) { showToast(err.message, "err"); }
+}
+
+function setFeatureToggle(inputId, stateId, on) {
+  const cb = $(inputId);
+  const state = $(stateId);
+  cb.checked = !!on;
+  state.textContent = on ? "deployed" : "undeployed";
+  state.className = "toggle-state " + (on ? "on" : "off");
+}
+
+["featDx", "featTx"].forEach((id) => {
+  $(id).addEventListener("change", () => {
+    const stateId = id === "featDx" ? "featDxState" : "featTxState";
+    setFeatureToggle(id, stateId, $(id).checked);
+  });
+});
+
+$("saveFeaturesBtn").addEventListener("click", async () => {
+  try {
+    const data = await api("/admin/features", {
+      method: "PATCH",
+      body: JSON.stringify({
+        dx_enabled: $("featDx").checked,
+        tx_enabled: $("featTx").checked,
+      }),
+    });
+    setFeatureToggle("featDx", "featDxState", data.dx_enabled);
+    setFeatureToggle("featTx", "featTxState", data.tx_enabled);
+    showToast("Tab settings saved — site updates on next page load", "ok");
+  } catch (err) { showToast(err.message, "err"); }
+});
+
+// ── Admins management ──────────────────────────────────────────────────────
+async function loadAdmins() {
+  try {
+    const data = await api("/admin/admins");
+    $("rootAdminLine").innerHTML = `Root admin (env var) · <span style="color:var(--green);">${escape(data.root_email || "—")}</span> — cannot be removed from here`;
+    const tb = $("adminsRows");
+    if (!data.admins || data.admins.length === 0) {
+      tb.innerHTML = "";
+      $("noAdmins").style.display = "block";
+    } else {
+      $("noAdmins").style.display = "none";
+      tb.innerHTML = data.admins.map((a) => `
+        <tr>
+          <td>${escape(a.email)}</td>
+          <td style="color: var(--text-dim);">${new Date(a.created_at).toISOString().slice(0, 10)}</td>
+          <td style="text-align: right;"><button class="danger" data-id="${a.id}" data-email="${escape(a.email)}">Remove</button></td>
+        </tr>
+      `).join("");
+      tb.querySelectorAll("button.danger").forEach((b) => {
+        b.addEventListener("click", async () => {
+          if (!confirm(`Remove admin ${b.dataset.email}? They will lose access immediately.`)) return;
+          try {
+            await api("/admin/admins/" + b.dataset.id, { method: "DELETE" });
+            showToast("Admin removed", "ok");
+            loadAdmins();
+          } catch (err) { showToast(err.message, "err"); }
+        });
+      });
+    }
+  } catch (err) { showToast(err.message, "err"); }
+}
+
+$("addAdminBtn").addEventListener("click", async () => {
+  const email = $("newAdminEmail").value.trim();
+  const pw = $("newAdminPw").value;
+  if (!email || pw.length < 8) {
+    showToast("Email and password (min 8 chars) required", "err");
+    return;
+  }
+  try {
+    await api("/admin/admins", {
+      method: "POST",
+      body: JSON.stringify({ email, password: pw }),
+    });
+    $("newAdminEmail").value = "";
+    $("newAdminPw").value = "";
+    showToast("Admin added", "ok");
+    loadAdmins();
   } catch (err) { showToast(err.message, "err"); }
 });
 
