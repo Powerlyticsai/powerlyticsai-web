@@ -1479,9 +1479,11 @@
     document.getElementById('signedInWho').textContent = sub.email || '';
     const dx = (sub.dx_apps && sub.dx_apps.length) ? sub.dx_apps.join(', ') : 'default apps';
     const tx = (sub.tx_apps && sub.tx_apps.length) ? sub.tx_apps.join(', ') : 'default apps';
+    const pe = (sub.pe_apps && sub.pe_apps.length) ? sub.pe_apps.join(', ') : 'default apps';
     document.getElementById('signedInApps').innerHTML =
       `<div><strong>Dx:</strong> ${escapeHtml(dx)}</div>` +
-      `<div style="margin-top:6px;"><strong>Tx:</strong> ${escapeHtml(tx)}</div>`;
+      `<div style="margin-top:6px;"><strong>Tx:</strong> ${escapeHtml(tx)}</div>` +
+      `<div style="margin-top:6px;"><strong>PE:</strong> ${escapeHtml(pe)}</div>`;
   }
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
