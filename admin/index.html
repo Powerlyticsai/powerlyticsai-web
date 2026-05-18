@@ -376,6 +376,11 @@
               <span class="toggle-label">Powerlytics-Tx tab</span>
               <span class="toggle-state" id="featTxState">—</span>
             </label>
+            <label class="toggle-row">
+              <input type="checkbox" id="featPe" />
+              <span class="toggle-label">PowerEdge Academy tab</span>
+              <span class="toggle-state" id="featPeState">—</span>
+            </label>
           </div>
           <button class="primary" id="saveFeaturesBtn" style="width:auto; margin-top: 14px;">Save tab settings</button>
 
@@ -389,6 +394,11 @@
           <div class="checks" id="defaultsDx"></div>
           <h3 style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin: 18px 0 8px;">Tx apps</h3>
           <div class="checks" id="defaultsTx"></div>
+          <h3 style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin: 18px 0 8px;">PowerEdge tiers</h3>
+          <p style="color: var(--text-dim); font-size: 11px; font-style: italic; margin: 4px 0 10px;">
+            Tier A (foundation lessons) is the universal free baseline — automatically included for every user. Use the chips below to grant access to paid tiers.
+          </p>
+          <div class="checks" id="defaultsPe"></div>
           <button class="primary" id="saveDefaultsBtn" style="width:auto; margin-top: 18px;">Save defaults</button>
 
           <div class="section-divider" style="height:1px; background:var(--border); margin:24px 0;"></div>
@@ -432,6 +442,12 @@
 
           <h3 style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin: 16px 0 8px;">Tx apps</h3>
           <div class="checks" id="formTx"></div>
+
+          <h3 style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin: 16px 0 8px;">PowerEdge tiers</h3>
+          <p style="color: var(--text-dim); font-size: 11px; font-style: italic; margin: 4px 0 10px;">
+            Tier A (foundation lessons) is the universal free baseline — automatically included for every user. Use the chips below to grant access to paid tiers.
+          </p>
+          <div class="checks" id="formPe"></div>
 
           <div class="form-row" style="margin-top: 16px;">
             <label style="display: inline-flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-family: var(--mono); font-size: 11px; color: var(--text);">
@@ -500,6 +516,12 @@ const TX_APPS = [
   { id: "ts",   label: "Time Series" },
   { id: "hc",   label: "Hosting Capacity" },
   { id: "diag", label: "Diagnostic" },
+];
+
+const PE_APPS = [
+  { id: "tier-b", label: "Tier B — PE-blueprint deep-dives" },
+  { id: "tier-c", label: "Tier C — Advanced PSA" },
+  { id: "tier-d", label: "Tier D — Modern grid" },
 ];
 
 // ── Token persistence ────────────────────────────────────────────────────────
@@ -581,20 +603,26 @@ $("logoutBtn").addEventListener("click", () => {
 function buildDefaultsCheckboxes() {
   $("defaultsDx").innerHTML = DX_APPS.map(a => checkRow("ddx", a)).join("");
   $("defaultsTx").innerHTML = TX_APPS.map(a => checkRow("dtx", a)).join("");
+  $("defaultsPe").innerHTML = PE_APPS.map(a => checkRow("dpe", a)).join("");
   $("formDx").innerHTML = DX_APPS.map(a => checkRow("fdx", a)).join("");
   $("formTx").innerHTML = TX_APPS.map(a => checkRow("ftx", a)).join("");
+  $("formPe").innerHTML = PE_APPS.map(a => checkRow("fpe", a)).join("");
 }
 function checkRow(prefix, app) {
   const id = `${prefix}-${app.id}`;
   return `<label for="${id}"><input type="checkbox" id="${id}" data-id="${app.id}"> ${escape(app.label)}</label>`;
 }
+const PREFIX_TO_CONTAINER = {
+  ddx: "defaultsDx", dtx: "defaultsTx", dpe: "defaultsPe",
+  fdx: "formDx",    ftx: "formTx",    fpe: "formPe",
+};
 function readChecks(prefix) {
-  return Array.from(document.querySelectorAll(`#${prefix.startsWith("d") ? "defaults" : "form"}${prefix.endsWith("dx") ? "Dx" : "Tx"} input:checked`))
+  return Array.from(document.querySelectorAll(`#${PREFIX_TO_CONTAINER[prefix]} input:checked`))
     .map(i => i.dataset.id);
 }
 function writeChecks(prefix, ids) {
   const set = new Set(ids || []);
-  document.querySelectorAll(`#${prefix.startsWith("d") ? "defaults" : "form"}${prefix.endsWith("dx") ? "Dx" : "Tx"} input`)
+  document.querySelectorAll(`#${PREFIX_TO_CONTAINER[prefix]} input`)
     .forEach(i => i.checked = set.has(i.dataset.id));
 }
 
@@ -603,6 +631,7 @@ async function loadDefaults() {
     const data = await api("/admin/defaults");
     writeChecks("ddx", data.dx_apps);
     writeChecks("dtx", data.tx_apps);
+    writeChecks("dpe", data.pe_apps);
   } catch (err) { showToast(err.message, "err"); }
 }
 
@@ -613,6 +642,7 @@ $("saveDefaultsBtn").addEventListener("click", async () => {
       body: JSON.stringify({
         dx_apps: readChecks("ddx"),
         tx_apps: readChecks("dtx"),
+        pe_apps: readChecks("dpe"),
       }),
     });
     showToast("Defaults saved", "ok");
@@ -625,6 +655,7 @@ async function loadFeatures() {
     const data = await api("/admin/features");
     setFeatureToggle("featDx", "featDxState", data.dx_enabled);
     setFeatureToggle("featTx", "featTxState", data.tx_enabled);
+    setFeatureToggle("featPe", "featPeState", data.pe_enabled);
   } catch (err) { showToast(err.message, "err"); }
 }
 
@@ -636,10 +667,9 @@ function setFeatureToggle(inputId, stateId, on) {
   state.className = "toggle-state " + (on ? "on" : "off");
 }
 
-["featDx", "featTx"].forEach((id) => {
+["featDx", "featTx", "featPe"].forEach((id) => {
   $(id).addEventListener("change", () => {
-    const stateId = id === "featDx" ? "featDxState" : "featTxState";
-    setFeatureToggle(id, stateId, $(id).checked);
+    setFeatureToggle(id, id + "State", $(id).checked);
   });
 });
 
@@ -650,10 +680,12 @@ $("saveFeaturesBtn").addEventListener("click", async () => {
       body: JSON.stringify({
         dx_enabled: $("featDx").checked,
         tx_enabled: $("featTx").checked,
+        pe_enabled: $("featPe").checked,
       }),
     });
     setFeatureToggle("featDx", "featDxState", data.dx_enabled);
     setFeatureToggle("featTx", "featTxState", data.tx_enabled);
+    setFeatureToggle("featPe", "featPeState", data.pe_enabled);
     showToast("Tab settings saved — site updates on next page load", "ok");
   } catch (err) { showToast(err.message, "err"); }
 });
@@ -855,6 +887,7 @@ $("newSubscriberBtn").addEventListener("click", () => {
   ["fEmail","fFirst","fLast","fAddress","fCountry","fSubStart","fSubEnd"].forEach(id => $(id).value = "");
   writeChecks("fdx", []);
   writeChecks("ftx", []);
+  writeChecks("fpe", []);
   $("fIpLocked").checked = true;
   $("ipDisplay").style.display = "none";
   $("setPwLink").style.display = "none";
@@ -890,6 +923,7 @@ function populateForm(s) {
   $("fSubEnd").value = s.subscription_end || "";
   writeChecks("fdx", s.dx_apps || []);
   writeChecks("ftx", s.tx_apps || []);
+  writeChecks("fpe", s.pe_apps || []);
   $("fIpLocked").checked = !!s.ip_locked;
 
   // Subscription status line
@@ -940,6 +974,7 @@ $("saveBtn").addEventListener("click", async () => {
     subscription_end: $("fSubEnd").value || null,
     dx_apps: readChecks("fdx"),
     tx_apps: readChecks("ftx"),
+    pe_apps: readChecks("fpe"),
     ip_locked: $("fIpLocked").checked,
   };
   if (!payload.email) { showToast("Email is required", "err"); return; }
