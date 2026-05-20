@@ -972,6 +972,9 @@
     <button class="tab" data-panel="tx" role="tab">
       Powerlytics-Tx
     </button>
+    <button class="tab" data-panel="poweredge" role="tab">
+      PowerEdge Academy
+    </button>
     <button class="tab" data-panel="feedback" role="tab">
       Feedback
     </button>
@@ -998,6 +1001,18 @@
 <iframe
           src="https://tx.powerlyticsai.com"
           title="Powerlytics-Tx Application"
+          allow="clipboard-read; clipboard-write; fullscreen"
+          loading="lazy">
+        </iframe>
+      </div>
+    </section>
+
+    <!-- POWEREDGE-ACADEMY PANEL -->
+    <section class="panel" id="poweredge">
+      <div class="embed-frame">
+<iframe
+          src="https://poweredge.powerlyticsai.com"
+          title="PowerEdge Academy"
           allow="clipboard-read; clipboard-write; fullscreen"
           loading="lazy">
         </iframe>
@@ -1155,7 +1170,7 @@
   // ─── TAB SWITCHING ─────────────────────
   const tabs = document.querySelectorAll('.tab');
   const panels = document.querySelectorAll('.panel');
-  const APP_PANELS = new Set(['dx', 'tx']);
+  const APP_PANELS = new Set(['dx', 'tx', 'poweredge']);
 
   function applyTabMode(panelId) {
     document.body.classList.toggle('fs-tab', APP_PANELS.has(panelId));
@@ -1189,10 +1204,12 @@
   }
 
   function applyTabVisibility() {
-    const flags = cachedFeatureFlags || { dx_enabled: true, tx_enabled: true };
+    const flags = cachedFeatureFlags || {
+      dx_enabled: true, tx_enabled: true, pe_enabled: true,
+    };
 
     // Read subscriber's permissions from sessionStorage (populated at login).
-    let subDx = [], subTx = [];
+    let subDx = [], subTx = [], subPe = [];
     try {
       const tok = getCookie(COOKIE_NAME);
       const cached = sessionStorage.getItem('pl_subscriber');
@@ -1200,11 +1217,13 @@
         const sub = JSON.parse(cached);
         subDx = Array.isArray(sub.dx_apps) ? sub.dx_apps : [];
         subTx = Array.isArray(sub.tx_apps) ? sub.tx_apps : [];
+        subPe = Array.isArray(sub.pe_apps) ? sub.pe_apps : [];
       }
     } catch { /* ignore */ }
 
     setTabVisible('dx', !!flags.dx_enabled || subDx.length > 0);
     setTabVisible('tx', !!flags.tx_enabled || subTx.length > 0);
+    setTabVisible('poweredge', !!flags.pe_enabled || subPe.length > 0);
 
     // If the active tab just got hidden, switch to the first visible one.
     const activeTab = document.querySelector('.tab.active');
