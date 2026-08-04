@@ -493,6 +493,7 @@ const DX_APPS = [
   { id: "arcflash",        label: "Arc Flash" },
   { id: "protectionhierarchy", label: "Protection Hierarchy" },
   { id: "hostingcapacity", label: "Hosting Capacity" },
+  { id: "voltvar",         label: "Volt-Var Optimization" },
   { id: "emtanalysis",     label: "EMT Analysis" },
   { id: "timeseriespf",    label: "Time Series Powerflow" },
   { id: "interconnection", label: "Interconnection Analysis" },
@@ -505,7 +506,12 @@ const DX_APPS = [
   { id: "loadforecast",    label: "Load Forecast" },
   { id: "modelbuilder",    label: "Model Builder" },
   { id: "dataquality",     label: "Data Quality Auditor" },
-  { id: "virtualplanner",  label: "Virtual Distribution Planner Agent" },
+  // NOT an agent, and the label must not say it is: this is a deterministic
+  // scheduler with no language model in the execution, decision or interaction
+  // path, and every result is gated on a licensed engineer's approval. The Dx
+  // catalogue was corrected for the same reason; this list had kept the old
+  // wording.
+  { id: "virtualplanner",  label: "Virtual Distribution Planner" },
 ];
 
 const TX_APPS = [
