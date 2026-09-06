@@ -509,7 +509,12 @@ const DX_APPS = [
   // it, and "Builder" described one of those. The ID is unchanged and must be
   // — it is the value stored in every subscriber's dx_apps.
   { id: "modelbuilder",    label: "Model Workbench" },
-  { id: "dataquality",     label: "Data Quality Auditor" },
+  // Removed 2026-09-05: "Data Quality Auditor" described the model screening,
+  // data-error report and conversion validator that already ship inside Model
+  // Workbench. Granting it gave a subscriber nothing, because Dx has no such
+  // tile — a permission that looked meaningful and was not. Existing
+  // subscribers may still carry the id in dx_apps; it is inert, and can be
+  // dropped whenever their record is next edited.
   // NOT an agent, and the label must not say it is: this is a deterministic
   // scheduler with no language model in the execution, decision or interaction
   // path, and every result is gated on a licensed engineer's approval. The Dx
