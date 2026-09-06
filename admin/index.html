@@ -504,7 +504,11 @@ const DX_APPS = [
   { id: "investmentplan",  label: "Utility Investment Planning" },
   { id: "commissionreport",label: "Utility Commission Report Generator" },
   { id: "loadforecast",    label: "Load Forecast" },
-  { id: "modelbuilder",    label: "Model Builder" },
+  // Renamed 2026-09-05: the app screens a model for what studies it can
+  // support, audits its data and converts between formats as well as editing
+  // it, and "Builder" described one of those. The ID is unchanged and must be
+  // — it is the value stored in every subscriber's dx_apps.
+  { id: "modelbuilder",    label: "Model Workbench" },
   { id: "dataquality",     label: "Data Quality Auditor" },
   // NOT an agent, and the label must not say it is: this is a deterministic
   // scheduler with no language model in the execution, decision or interaction
